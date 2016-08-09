@@ -2,6 +2,8 @@ import serial
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+import gc
+from datetime import datetime
 
 
 
@@ -48,18 +50,29 @@ class Student(Base):
         self.card_id
     
     
-
+code = ''
 while True:
     data = serial.readline().strip()
-    data = data[1:11]
-    
-    if len(data) == 10:
-        if str(data) == '80000AA599':
-            print 'Success'
-            
-               
-           
-        
-        
+    data = data[-12:]
+    data = str(data)
 
-    
+
+    record = session.query(Student).filter(Student.card_id == data).first()
+    if record:
+        record.last_access = datetime.now()
+        session.commit()
+        fname = record.fname
+        lname = record.lname
+        currStation = None
+
+        check = session.query(Current).filter(Current.fname == fname, Current.lname == lname).first()
+
+        if not check:
+            newCurrent = Current(fname, lname, currStation)
+            session.add(newCurrent)
+            session.flush()
+            session.commit()
+        print 'Authenticated!'
+    else:
+        print 'Failure. Please hover your card again.'
+        
