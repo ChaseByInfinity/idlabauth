@@ -8,6 +8,7 @@ import webbrowser
 import selenium.webdriver as webdriver
 import RPi.GPIO as GPIO
 import time
+import pigpio
 
 
 
@@ -17,9 +18,10 @@ engine = create_engine('mysql+pymysql://root:tatnall@localhost/idlab', echo=Fals
 ser1 = serial.Serial('/dev/ttyUSB0', baudrate=9600)
 
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(14, GPIO.OUT)
-GPIO.output(14, GPIO.LOW)
+pi1 = pigpio.pi(name)
+
+pi1.write(14, 1)
+
 
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -93,9 +95,9 @@ while True:
      
         url = "file:///home/pi/Authentication/pages/success.html"
         b.get(url)
-        GPIO.output(14, GPIO.LOW)
+        pi1.write(14, 0)
         time.sleep(3)
-        GPIO.output(14, GPIO.HIGH)
+        pi1.write(14, 1)
        
 
         
@@ -105,7 +107,7 @@ while True:
     else:
         url = "file:///home/pi/Authentication/pages/failure.html"
         b.get(url)
-        GPIO.output(14, GPIO.HIGH)
+        pi1.write14, 1)
 
 
         

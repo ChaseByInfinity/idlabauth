@@ -21,9 +21,10 @@ Session = sessionmaker(bind=engine)
 session = Session()
 Base = declarative_base()
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(14, GPIO.OUT)
-GPIO.output(14, GPIO.HIGH)
+pi1 = pigpio.pi(name)
+
+pi1.write(14, 1)
+
 
 
 class Student(Base):
@@ -76,15 +77,15 @@ while True:
             session.delete(curr)
             session.commit()
             session.flush()
-            GPIO.output(14, GPIO.LOW)
+            pi1.write(14, 0)
             time.sleep(3)
-            GPIO.output(14, GPIO.HIGH)
+            pi1.write(14, 1)
             
             
         else:
-            GPIO.output(14, GPIO.LOW)
+            pi1.write(14, 0)
             time.sleep(3)
-            GPIO.output(14, GPIO.HIGH)
+            pi1.write(14, 1)
             
 
             
