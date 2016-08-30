@@ -11,36 +11,20 @@ import time
 
 
 
-
-
 engine = create_engine('mysql+pymysql://root:tatnall@localhost/idlab', echo=False)
-ser1 = serial.Serial('/dev/ttyUSB0', baudrate=9600)
+serial = serial.Serial('/dev/ttyUSB1', baudrate=9600)
 
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(14, GPIO.OUT)
-GPIO.output(14, GPIO.LOW)
+
 
 Session = sessionmaker(bind=engine)
 session = Session()
-
 Base = declarative_base()
 
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(14, GPIO.OUT)
+GPIO.output(14, GPIO.HIGH)
 
-b = webdriver.Firefox()
-
-class Current(Base):
-    __tablename__ = 'current'
-
-    id = Column(Integer, primary_key=True)
-    fname = Column(String(255))
-    lname = Column(String(255))
-    currStation = Column(String(255))
-
-    def __init__(self, fname, lname, currStation):
-        self.fname = fname
-        self.lname = lname
-        self.currStation = currStation
 
 class Student(Base):
     __tablename__ = 'students'
@@ -63,53 +47,52 @@ class Student(Base):
         self.card_id
     
     
+
+class Current(Base):
+    __tablename__ = 'current'
+
+    id = Column(Integer, primary_key=True)
+    fname = Column(String(255))
+    lname = Column(String(255))
+    currStation = Column(String(255))
+
+    def __init__(self, fname, lname, currStation):
+        self.fname = fname
+        self.lname = lname
+        self.currStation = currStation
 while True:
-    data = ser1.readline().strip()
+    data = serial.readline().strip()
     data = data[-12:]
     data = str(data)
 
-    
 
     record = session.query(Student).filter(Student.card_id == data).first()
     if record:
-        
-       
-        record.last_access = datetime.now()
-        session.commit()
         fname = record.fname
         lname = record.lname
-        currStation = None
-        
-        
+        curr = session.query(Current).filter(Current.fname == fname, Current.lname == lname).first()
 
-        check = session.query(Current).filter(Current.fname == fname, Current.lname == lname).first()
-        
-        if not check:
-            newCurrent = Current(fname, lname, currStation)
-            session.add(newCurrent)
-            session.flush()
+        if curr:
+            session.delete(curr)
             session.commit()
-        
-     
-        url = "file:///home/pi/Authentication/pages/success.html"
-        b.get(url)
-        GPIO.output(14, GPIO.LOW)
-        time.sleep(3)
-        GPIO.output(14, GPIO.HIGH)
-       
+            session.flush()
+            GPIO.output(14, GPIO.LOW)
+            time.sleep(3)
+            GPIO.output(14, GPIO.HIGH)
+            
+            
+        else:
+            GPIO.output(14, GPIO.LOW)
+            time.sleep(3)
+            GPIO.output(14, GPIO.HIGH)
+            
 
-        
-       
-        
-        
+            
+
+
     else:
-        url = "file:///home/pi/Authentication/pages/failure.html"
-        b.get(url)
-        GPIO.output(14, GPIO.HIGH)
+        print "Your credentials do not exist"
 
 
-        
-   
     
-
         
